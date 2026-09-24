@@ -9,6 +9,55 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import NearestNeighbors
 
 st.set_page_config(page_title="Football Player Analysis", page_icon="⚽", layout="wide")
+import plotly.io as pio
+
+# Neon dark theme for all charts
+pio.templates["neon"] = pio.templates["plotly_dark"]
+pio.templates["neon"].layout.update(
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="rgba(0,0,0,0)",
+    colorway=["#00FFA3", "#00B8FF", "#FF2E97", "#FFD600", "#9D4EDD"],
+    font=dict(color="#E5F4FF"),
+)
+pio.templates.default = "neon"
+
+st.markdown("""
+<style>
+.stApp {
+    background: radial-gradient(circle at 20% 0%, #0f2a3f 0%, #0A0E1A 45%, #05070f 100%);
+}
+h1 {
+    background: linear-gradient(90deg, #00FFA3, #00B8FF, #FF2E97);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 900 !important;
+    letter-spacing: 1px;
+}
+h2, h3 { color: #00FFA3 !important; }
+[data-testid="stMetric"] {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(0,255,163,0.35);
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 0 18px rgba(0,255,163,0.15);
+    backdrop-filter: blur(8px);
+}
+[data-testid="stMetricValue"] { color: #00FFA3; text-shadow: 0 0 12px #00FFA3; }
+.stTabs [data-baseweb="tab"] {
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px 12px 0 0;
+    padding: 10px 22px;
+}
+.stTabs [aria-selected="true"] {
+    background: rgba(0,255,163,0.15);
+    border-bottom: 2px solid #00FFA3;
+}
+.stSuccess {
+    border: 1px solid #00FFA3;
+    box-shadow: 0 0 20px rgba(0,255,163,0.3);
+}
+</style>
+""", unsafe_allow_html=True)
 
 SKILLS = ['Crossing','Finishing','Heading accuracy','Short passing','Volleys','Dribbling',
           'Curve','FK Accuracy','Long passing','Ball control','Acceleration','Sprint speed',
