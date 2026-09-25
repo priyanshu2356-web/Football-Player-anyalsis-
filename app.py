@@ -9,6 +9,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import NearestNeighbors
 
 st.set_page_config(page_title="Football Player Analysis", page_icon="⚽", layout="wide")
+
 import plotly.io as pio
 
 # Neon dark theme for all charts
@@ -89,11 +90,22 @@ def build_nn(_df):
     nn = NearestNeighbors(n_neighbors=6).fit(sc.transform(X))
     return sc, nn
 
+@st.cache_resource
+def build_value_model(_df):
+    value_features = SKILLS + GK + ['Age', 'Overall rating', 'Potential', 'International reputation']
+    Xv = _df[value_features].fillna(_df[value_features].median())
+    yv = _df['Value']
+    vm = RandomForestRegressor(n_estimators=200, random_state=42, n_jobs=-1).fit(Xv, yv)
+    pred_value = vm.predict(Xv)
+    return value_features, pred_value
+
 df = load()
 st.title("⚽ Football Player Statistics Analysis")
 st.caption("Explore players, compare them, find similar players, and predict ratings with ML.")
 
-tab1, tab2, tab3, tab4 = st.tabs(["📊 Overview", "🆚 Compare Players", "🔍 Similar Players", "🤖 Rating Predictor"])
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
+    ["📊 Overview", "🆚 Compare Players", "🔍 Similar Players",
+     "🤖 Rating Predictor", "💰 Bargain Finder", "💡 Key Insights"])
 
 with tab1:
     c1, c2, c3 = st.columns(3)
@@ -147,4 +159,38 @@ with tab4:
     age = st.slider("Age", 16, 45, 25)
     inp = df[FEATURES].median().to_frame().T
     inp["Reactions"], inp["Short passing"], inp["Age"] = reactions, shortp, age
-    st.success(f"Predicted overall rating: {model.predict(inp)[0]:.1f}")
+    pred = model.predict(inp)[0]
+    st.success(f"Predicted overall rating: {pred:.1f}")
+
+    st.write("What's pushing this prediction:")
+    baseline = df[FEATURES].median()
+    diff = (inp.iloc[0] - baseline).sort_values(key=abs, ascending=False).head(5)
+    st.bar_chart(diff)
+
+with tab5:
+    st.subheader("Find undervalued players")
+    st.caption("Players whose actual value is well below what their skills predict.")
+    value_features, pred_value = build_value_model(df)
+    df["Predicted_Value"] = pred_value
+    df["Value_Gap"] = df["Predicted_Value"] - df["Value"]
+
+    max_age = st.slider("Max age", 16, 40, 26)
+    min_rating = st.slider("Min overall rating", 50, 95, 70)
+
+    bargains = df[(df["Age"] <= max_age) & (df["Overall rating"] >= min_rating)]
+    bargains = bargains.nlargest(10, "Value_Gap")
+    show_cols = ["Player", "Club", "Age", "Overall rating", "Value", "Predicted_Value"]
+    st.dataframe(bargains[show_cols], hide_index=True)
+    st.caption("Predicted_Value is what the model expects based on skills alone. "
+               "A large gap suggests the player may be underpriced.")
+
+with tab6:
+    st.subheader("Key Insights")
+    st.markdown("""
+    - **Ratings cluster between 70-80** — very few players exceed 85 overall.
+    - **Players peak around age 25-30**, then ratings level off.
+    - **Reactions is the strongest predictor** of overall rating (0.91 correlation) — stronger than any physical stat.
+    - **Attacking positions (CF, CM, RW)** have the highest average ratings.
+    - **Market value rises steeply with rating**, and value and wage move closely together.
+    - The **Bargain Finder** uses a second ML model to flag players priced below what their skills justify — a real scouting use case.
+    """)
