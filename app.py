@@ -106,15 +106,45 @@ def build_value_model(_df):
     vm = RandomForestRegressor(n_estimators=200, random_state=42, n_jobs=-1).fit(Xv, yv)
     pred_value = vm.predict(Xv)
     return value_features, pred_value
+    import numpy as np
+
+POSITION_COORDS = {
+    "GK": (5, 50), "CB": (20, 50), "LB": (22, 15), "RB": (22, 85),
+    "LWB": (35, 10), "RWB": (35, 90), "CDM": (40, 50), "CM": (55, 50),
+    "CAM": (68, 50), "LM": (55, 15), "RM": (55, 85), "LW": (75, 15),
+    "RW": (75, 85), "CF": (85, 50), "ST": (90, 50),
+}
+
+def player_heatmap(player_row):
+    x0, y0 = POSITION_COORDS.get(player_row["Best position"], (50, 50))
+    spread = 8 + (player_row.get("Sprint speed", 60) / 99) * 14  # more pace = wider zone
+
+    xs = np.random.normal(x0, spread, 3000).clip(0, 100)
+    ys = np.random.normal(y0, spread, 3000).clip(0, 100)
+
+    fig = go.Figure()
+    fig.add_trace(go.Histogram2dContour(
+        x=xs, y=ys, colorscale="Turbo", showscale=False,
+        contours=dict(coloring="heatmap"), line=dict(width=0)
+    ))
+    # pitch outline
+    fig.add_shape(type="rect", x0=0, y0=0, x1=100, y1=100, line=dict(color="white"))
+    fig.add_shape(type="line", x0=50, y0=0, x1=50, y1=100, line=dict(color="white", dash="dot"))
+    fig.update_layout(
+        title=f"Typical zone of operation — {player_row['Player']} ({player_row['Best position']})",
+        xaxis=dict(range=[0, 100], showgrid=False, visible=False),
+        yaxis=dict(range=[0, 100], showgrid=False, visible=False),
+        height=500,
+    )
+    return fig
 
 df = load()
 st.title("⚽ Football Player Statistics Analysis")
 st.caption("Explore players, compare them, find similar players, and predict ratings with ML.")
 
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(
     ["📊 Overview", "🆚 Compare Players", "🔍 Similar Players",
-     "🤖 Rating Predictor", "💰 Bargain Finder", "💡 Key Insights"])
-
+     "🤖 Rating Predictor", "💰 Bargain Finder", "💡 Key Insights", "🔥 Heatmap"])
 with tab1:
     c1, c2, c3 = st.columns(3)
     c1.metric("Players", f"{len(df):,}")
@@ -208,3 +238,9 @@ with tab6:
     - **Market value rises steeply with rating**, and value and wage move closely together.
     - The **Bargain Finder** uses a second ML model to flag players priced below what their skills justify — a real scouting use case.
     """)
+    with tab7:
+    st.subheader("Player positional heatmap")
+    st.caption("Illustrative — shows typical zone of operation based on position and pace, not real match tracking data.")
+    sel_hm = st.selectbox("Pick a player", df["Label"], key="heatmap")
+    row = df[df["Label"] == sel_hm].iloc[0]
+    st.plotly_chart(player_heatmap(row), use_container_width=True)
