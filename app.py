@@ -238,7 +238,7 @@ with tab6:
     - **Market value rises steeply with rating**, and value and wage move closely together.
     - The **Bargain Finder** uses a second ML model to flag players priced below what their skills justify — a real scouting use case.
     """)
-    with tab7:
+with tab7:
     st.subheader("Player positional heatmap")
     st.caption("Illustrative — shows typical zone of operation based on position and pace, not real match tracking data.")
     sel_hm = st.selectbox("Pick a player", df["Label"], key="heatmap")
