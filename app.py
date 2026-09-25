@@ -57,6 +57,14 @@ h2, h3 { color: #00FFA3 !important; }
     border: 1px solid #00FFA3;
     box-shadow: 0 0 20px rgba(0,255,163,0.3);
 }
+h1 { animation: glow 2.5s ease-in-out infinite alternate; }
+@keyframes glow {
+  from { filter: drop-shadow(0 0 6px #00FFA3); }
+  to   { filter: drop-shadow(0 0 20px #00B8FF); }
+}
+[data-testid="stMetric"] { transition: transform 0.2s; }
+[data-testid="stMetric"]:hover { transform: translateY(-4px) scale(1.02); 
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -117,6 +125,12 @@ with tab1:
     st.plotly_chart(px.histogram(d, x="Overall rating", nbins=30, title="Rating distribution"), use_container_width=True)
     st.plotly_chart(px.scatter(d, x="Age", y="Overall rating", hover_name="Player", color="Best position", title="Age vs rating"), use_container_width=True)
     st.plotly_chart(px.scatter(d, x="Overall rating", y="Value", log_y=True, hover_name="Player", title="Market value vs rating (log scale)"), use_container_width=True)
+
+    fig3d = px.scatter_3d(d, x="Age", y="Overall rating", z="Value",
+                           color="Best position", hover_name="Player",
+                           title="Age × Rating × Value (drag to rotate)")
+    st.plotly_chart(fig3d, use_container_width=True)
+
     st.subheader("Top 10 players")
     st.dataframe(d.nlargest(10, "Overall rating")[["Player", "Club", "Best position", "Age", "Overall rating", "Potential"]], hide_index=True)
 
