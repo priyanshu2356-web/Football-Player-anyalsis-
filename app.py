@@ -118,24 +118,49 @@ POSITION_COORDS = {
 
 def player_heatmap(player_row):
     x0, y0 = POSITION_COORDS.get(player_row["Best position"], (50, 50))
-    spread = 8 + (player_row.get("Sprint speed", 60) / 99) * 14  # more pace = wider zone
+    spread = 8 + (player_row.get("Sprint speed", 60) / 99) * 14
 
     xs = np.random.normal(x0, spread, 3000).clip(0, 100)
     ys = np.random.normal(y0, spread, 3000).clip(0, 100)
 
     fig = go.Figure()
+
+    # Heat zone
     fig.add_trace(go.Histogram2dContour(
-        x=xs, y=ys, colorscale="Turbo", showscale=False,
+        x=xs, y=ys, colorscale="Turbo", showscale=False, opacity=0.75,
         contours=dict(coloring="heatmap"), line=dict(width=0)
     ))
-    # pitch outline
-    fig.add_shape(type="rect", x0=0, y0=0, x1=100, y1=100, line=dict(color="white"))
-    fig.add_shape(type="line", x0=50, y0=0, x1=50, y1=100, line=dict(color="white", dash="dot"))
+
+    pitch_line = dict(color="white", width=2)
+
+    # Outer boundary
+    fig.add_shape(type="rect", x0=0, y0=0, x1=100, y1=100, line=pitch_line)
+    # Halfway line
+    fig.add_shape(type="line", x0=50, y0=0, x1=50, y1=100, line=pitch_line)
+    # Center circle
+    fig.add_shape(type="circle", x0=41, y0=32, x1=59, y1=68, line=pitch_line)
+    # Center spot
+    fig.add_shape(type="circle", x0=49.5, y0=49.5, x1=50.5, y1=50.5,
+                  line=pitch_line, fillcolor="white")
+
+    # Left penalty area + 6-yard box
+    fig.add_shape(type="rect", x0=0, y0=21, x1=16, y1=79, line=pitch_line)
+    fig.add_shape(type="rect", x0=0, y0=37, x1=6, y1=63, line=pitch_line)
+    fig.add_shape(type="circle", x0=8, y0=45, x1=12, y1=55, line=pitch_line)
+
+    # Right penalty area + 6-yard box
+    fig.add_shape(type="rect", x0=84, y0=21, x1=100, y1=79, line=pitch_line)
+    fig.add_shape(type="rect", x0=94, y0=37, x1=100, y1=63, line=pitch_line)
+    fig.add_shape(type="circle", x0=88, y0=45, x1=92, y1=55, line=pitch_line)
+
     fig.update_layout(
         title=f"Typical zone of operation — {player_row['Player']} ({player_row['Best position']})",
-        xaxis=dict(range=[0, 100], showgrid=False, visible=False),
-        yaxis=dict(range=[0, 100], showgrid=False, visible=False),
-        height=500,
+        xaxis=dict(range=[-2, 102], showgrid=False, visible=False),
+        yaxis=dict(range=[-2, 102], showgrid=False, visible=False, scaleanchor="x"),
+        plot_bgcolor="#1e5631",
+        paper_bgcolor="rgba(0,0,0,0)",
+        height=550,
+        margin=dict(l=10, r=10, t=50, b=10),
     )
     return fig
 
